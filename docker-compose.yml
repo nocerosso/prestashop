@@ -1,40 +1,24 @@
 services:
-    web:
-        image: nginx:latest
-        ports:
-            - "8080:80"
-        volumes:
-            - web-html/var/www/html
-            - web-log:/var/log/ngnix
-            # put default.conf inside 
-            - web-ngnx:/etc/nginx/conf.d
-        links:
-            - php-fpm
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.shop.entrypoints=websecure"
-            - "traefik.http.routers.shop.tls.certResolver=letsencrypt"
-            - "traefik.http.routers.shop.rule=Host(`shop.envysartorialist.it`)"
-            - "traefik.http.services.shop.loadbalancer.server.port=8080"
-        networks:
-            - dokploy-network
-
-    php-fpm:
-        build: docker/php-fpm
-        volumes:
-            - ./src:/var/www/html
-            - ./log:/var/log/ngnix
-        networks:
-            - dokploy-network
-
-volumes:
-  web-html:
-    driver: local
-  web-log:
-    driver: local
-  web-ngnix:
-    driver: local
-
+  apache:
+    image: bitnami/apache:latest
+    ports:
+      - 8080
+    volumes:
+      - ./app:/opt/bitnami/apache/htdocs:rw
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.shop.entrypoints=websecure"
+      - "traefik.http.routers.shop.tls.certResolver=letsencrypt"
+      - "traefik.http.routers.shop.rule=Host(`shop.envysartorialist.it`)"
+      - "traefik.http.services.shop.loadbalancer.server.port=8080"   
+  php-fpm:
+    image: bitnami/php-fpm:latest
+    volumes:
+      - ./app:/opt/bitnami/apache/htdocs:rw 
+    networks:
+      - dokploy-network
 networks:
   dokploy-network:
     external: true
